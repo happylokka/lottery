@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="screen-orientation" content="portrait">
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0"/>
+    <title>年会抽奖小程序</title>
+    <link rel="stylesheet" type="text/css" href="css/reset.css">
+    <link rel="stylesheet" type="text/css" href="css/wall.css">
+    <style type="text/css">
+        .wall { 
+            overflow: scroll;
+            background-repeat: repeat;
+        }
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        body, html {
+            width: 100%;
+            height: 100%;
+        }
+        .mask {
+            -webkit-filter:blur(5px);
+            filter:blur(5px);
+        }
+        #main {
+            -webkit-transition: all 1s;
+            transition: all 1s;
+        }
+        .result-list {    
+            width: 96%;
+            margin: 0 auto;
+            text-align: center;
+            color: #fff;
+            font-size: 30px;
+            line-height: 50px;
+            padding: 50px 0;
+            font-family: '幼圆';    
+            border-bottom: 1px dashed #fff;
+        }
+        .result-list div{
+            display: flex;
+            justify-content: center;
+        }
+        .result-list table{
+            width: 80%;
+            margin: 0 auto;
+            border: 1px solid #fff;
+        }
+        .result-list tr th{
+            text-align: center;
+        }
+        .result-list .num{    
+            font-family: 'Microsoft Yahei';
+            color: #C81623;
+        }
+        .result-title {
+            text-align: center;
+            color: #4de7c8;
+            font-size: 40px;
+            margin-top: 100px;
+            font-family: '幼圆';
+        }
+
+    </style>
+</head>
+<body>
+<div id="main" class="wall">
+    <div class="result-title" @click="downloadFile">获奖名单</div>
+    <div class="result-list" v-for="result in results">
+            <table border="1" class="listOuter">
+                <tr>
+                    <th>中奖号码</th>
+                    <th>姓名</th>
+                    <th>手机</th>
+                </tr>
+                <tr v-for="item in result">
+                    <td class="num">{{item.index}}</td>
+                    <td>{{item.name}}</td>
+                    <td>{{item.phone}}</td>
+                </tr>
+            </table>
+    </div>
+</div>
+<script type="text/javascript" src="js/vue.js"></script>
+<script type="text/javascript" src="js/FileSaver.js"></script>
+<script type="text/javascript" src="js/xlsx.full.min.js"></script>
+<script type="text/javascript">
+    new Vue({
+        el: '#main',
+        data: {
+            results: []
+        },
+        mounted () {
+            let vm = this
+            let locals = window.localStorage
+            let str_results = []
+            // 遍历(排除choosed)
+            for(let i = 0; i<localStorage.length; i++){
+                if (localStorage.key(i) !== 'choosed') {
+                    str_results.push(localStorage.getItem(localStorage.key(i)))
+                }
+            }
+            // 分割每个string, 并将</br>换成空格
+            let results = []
+            for(let nameList of str_results) {
+                let temp = JSON.parse(nameList)
+                temp = temp.map(item => {return item})
+                results.push(temp)
+            }
+            
+            // 根据长度进行排序，名单短的放在前面
+            results = results.sort((x, y) => { return x.length - y.length;})
+            this.results = results
+        },
+        methods: {
+            downloadFile: function(){
+                var wb = XLSX.utils.table_to_book(document.querySelector('.listOuter'))            
+                var wbout = XLSX.write(wb, { bookType: 'xlsx', bookSST: true, type: 'array' })            
+                try {                
+                    saveAs(new Blob([wbout], { type: 'text/plain;charset=utf-8' }), '中奖名单.xlsx')            
+                } catch (e) {                 
+                    if (typeof console !== 'undefined') console.log(e, wbout)            
+                    }            
+                    return wbout
+			}
+        },
+    })
+</script>
+</body>
+</html>
